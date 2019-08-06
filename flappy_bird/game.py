@@ -35,6 +35,9 @@ class Game:
         bird.draw(self.screen)
         self.draw_score(self.score)
 
+        clock.tick(30)
+        pygame.display.update()
+
     def move(self, bird, ground, pipes):
         bird.move()
         ground.move()
@@ -95,9 +98,6 @@ class Game:
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                         bird.jump()
 
-                self.draw_screen(bird, pipes, ground)
                 self.move(bird, ground, pipes)
                 self.collision(bird, pipes)
-
-                clock.tick(30)
-                pygame.display.update()
+                self.draw_screen(bird, pipes, ground)
