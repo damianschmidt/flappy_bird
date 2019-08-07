@@ -28,10 +28,7 @@ class Pipe:
         self.x -= self.velocity
 
     def draw(self, screen):
-        # draw top pipe
         screen.blit(self.pipe_top, (self.x, self.top_position))
-
-        # draw bottom pipe
         screen.blit(self.pipe_bottom, (self.x, self.bottom_position))
 
     def collide(self, bird):

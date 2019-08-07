@@ -17,6 +17,7 @@ class Game:
         self.bg_img = pygame.transform.scale(pygame.image.load('src/img/background.png').convert_alpha(), (600, 900))
         self.score = 0
         self.run = False
+        self.num_alive = 0
 
     def start(self):
         self.game_loop()
@@ -27,30 +28,36 @@ class Game:
         text_surface = font.render(f'Score: {score}', True, (255, 255, 255))
         self.screen.blit(text_surface, (10, 10))
 
-    def draw_screen(self, bird, pipes, ground):
+    def draw_num_of_alive(self):
+        pygame.font.init()
+        font = pygame.font.SysFont('Arial', 24)
+        text_surface = font.render(f'Alive: {self.num_alive}', True, (255, 255, 255))
+        self.screen.blit(text_surface, (100, 10))
+
+    def draw_screen(self, birds, pipes, ground):
         self.screen.blit(self.bg_img, (0, 0))
-        for pipe in pipes:
-            pipe.draw(self.screen)
+        [pipe.draw(self.screen) for pipe in pipes]
+        [bird.draw(self.screen) for bird in birds]
         ground.draw(self.screen)
-        bird.draw(self.screen)
         self.draw_score(self.score)
+        self.draw_num_of_alive()
 
         clock.tick(30)
         pygame.display.update()
 
-    def move(self, bird, ground, pipes):
-        bird.move()
+    def move(self, birds, ground, pipes):
+        [bird.move() for bird in birds]
+        [pipe.move() for pipe in pipes]
         ground.move()
-        for pipe in pipes:
-            pipe.move()
 
-    def collision(self, bird, pipes):
+    def collision(self, birds, pipes):
         to_remove = []
         add_pipe = False
 
         for pipe in pipes:
-            if pipe.collide(bird):
-                self.run = False
+            for bird in birds:
+                if pipe.collide(bird):
+                    birds.remove(bird)
 
             if pipe.x + pipe.pipe_top.get_width() < 0:
                 to_remove.append(pipe)
@@ -67,19 +74,26 @@ class Game:
         for item in to_remove:
             pipes.remove(item)
 
-        if bird.y + bird.img.get_height() >= self.base or bird.y < 0:
+        for bird in birds:
+            if bird.y + bird.img.get_height() >= self.base or bird.y < 0:
+                birds.remove(bird)
+
+    def is_running(self, birds):
+        self.num_alive = len(birds)
+        if self.num_alive == 0:
             self.run = False
 
     def restart(self):
         self.score = 0
         self.run = True
-        return Bird(240, 350), Ground(self.base, self.screen_width), [Pipe(700)]
+        return [Bird(240, 350) for _ in range(50)], Ground(self.base, self.screen_width), [Pipe(700)]
 
     def game_loop(self):
-        bird = Bird(240, 350)
+        birds = [Bird(240, 350) for _ in range(50)]
         ground = Ground(self.base, self.screen_width)
         pipes = [Pipe(700)]
         self.run = True
+        self.num_alive = len(birds)
 
         while True:
             for event in pygame.event.get():
@@ -87,17 +101,17 @@ class Game:
                     pygame.quit()
                     quit()
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                    bird, ground, pipes = self.restart()
+                    birds, ground, pipes = self.restart()
 
             while self.run:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
-                        self.run = False
                         pygame.quit()
                         quit()
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                        bird.jump()
+                        birds[0].jump()
 
-                self.move(bird, ground, pipes)
-                self.collision(bird, pipes)
-                self.draw_screen(bird, pipes, ground)
+                self.move(birds, ground, pipes)
+                self.collision(birds, pipes)
+                self.is_running(birds)
+                self.draw_screen(birds, pipes, ground)
