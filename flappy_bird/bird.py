@@ -12,7 +12,7 @@ class Bird:
         self.img_count = 0
         self.imgs = [pygame.transform.scale2x(pygame.image.load(f'src/img/bird{str(x)}.png')) for x in range(1, 4)]
         self.img = self.imgs[0]
-        self.rotation_velocity = 8
+        self.rotation_velocity = 5
         self.max_rotation = 25
 
     def jump(self):
