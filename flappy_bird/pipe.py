@@ -17,7 +17,7 @@ class Pipe:
 
         self.passed = False
         self.set_height()
-        self.velocity = 5
+        self.velocity = 7
 
     def set_height(self):
         self.height = random.randrange(50, 450)

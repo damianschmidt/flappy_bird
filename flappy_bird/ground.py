@@ -8,7 +8,7 @@ class Ground:
         self.x_start = 0
         self.x_end = self.width
         self.img = pygame.transform.scale(pygame.image.load('src/img/ground.png').convert_alpha(), (self.width, 300))
-        self.velocity = 5
+        self.velocity = 7
 
     def move(self):
         self.x_start -= self.velocity
