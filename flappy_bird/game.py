@@ -21,6 +21,7 @@ class Game:
         self.score = 0
         self.run = False
         self.num_alive = 0
+        self.generation = 0
 
     def start(self):
         self.game_loop()
@@ -119,10 +120,60 @@ class Game:
                 self.is_running(birds)
                 self.draw_screen(birds, pipes, ground)
 
-    def eval_genomes(self, genomes, config, generation):
+    def eval_genomes(self, genomes, config):
+        self.generation += 1
+
+        nets = []
+        birds = []
+        genomes_list = []
+
         for genome_id, genome in genomes:
             genome.fitness = 0
             net = neat.nn.FeedForwardNetwork.create(genome, config)
+
+            nets.append(net)
+            birds.append(Bird(230, 350))
+            genomes_list.append(genome)
+
+        # Build game
+        ground = Ground(self.base, self.screen_width)
+        pipes = [Pipe(700)]
+        self.score = 0
+        self.num_alive = len(birds)
+        self.run = True
+
+        while self.run and len(birds) > 0:
+            clock.tick(30)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.run = False
+                    pygame.quit()
+                    quit()
+
+            # On which pipe NEAT should take care of
+            pipe_index = 0
+            if len(pipes) > 1 and birds[0].x > pipes[0].pipe_top.get_width():
+                pipe_index = 1
+
+            for i, bird in enumerate(birds):
+                genomes_list[i].fitness += 0.1
+                bird.move()
+
+                # give bird, top pipe and bottom pipe height to make jump decision
+                output = nets[i].activate(
+                    (bird.y, abs(bird.y - pipes[pipe_index].height), abs(bird.y - pipes[pipe_index].bottom_position)))
+
+                if output[0] > 0.5:
+                    bird.jump()
+
+            ground.move()
+
+            # Add pipe move and collision
+            # Add removing pipes
+            # Add collision with ground and sky
+            # Remove genomes, nets and birds if requires
+            # Draw window
 
     def run_neat(self, config_file):
         # Load configuration.
