@@ -1,4 +1,7 @@
 import pygame
+import neat
+import visualize
+
 from flappy_bird.bird import Bird
 from flappy_bird.pipe import Pipe
 from flappy_bird.ground import Ground
@@ -89,7 +92,7 @@ class Game:
         return [Bird(240, 350) for _ in range(50)], Ground(self.base, self.screen_width), [Pipe(700)]
 
     def game_loop(self):
-        birds = [Bird(240, 350) for _ in range(50)]
+        birds = [Bird(240, 350)]
         ground = Ground(self.base, self.screen_width)
         pipes = [Pipe(700)]
         self.run = True
@@ -115,3 +118,32 @@ class Game:
                 self.collision(birds, pipes)
                 self.is_running(birds)
                 self.draw_screen(birds, pipes, ground)
+
+    def eval_genomes(self, genomes, config, generation):
+        for genome_id, genome in genomes:
+            genome.fitness = 0
+            net = neat.nn.FeedForwardNetwork.create(genome, config)
+
+    def run_neat(self, config_file):
+        # Load configuration.
+        config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet,
+                             neat.DefaultStagnation, config_file)
+
+        # Create the population, which is the top-level object for a NEAT run.
+        p = neat.Population(config)
+
+        # Add a stdout reporter to show progress in the terminal.
+        p.add_reporter(neat.StdOutReporter(True))
+        stats = neat.StatisticsReporter()
+        p.add_reporter(stats)
+        # p.add_reporter(neat.Checkpointer(5))
+
+        # Run for up to 20 generations.
+        winner = p.run(self.eval_genomes, 20)
+
+        # Show final stats
+        print('\nBest genome:\n{!s}'.format(winner))
+        node_names = {-1: 'BIRD_Y', -2: 'TOP_PIPE_Y', -3: 'BOTTOM_PIPE_Y', 0: 'JUMP'}
+        visualize.draw_net(config, winner, True, node_names=node_names)
+        visualize.plot_stats(stats, ylog=False, view=True)
+        visualize.plot_species(stats, view=True)
