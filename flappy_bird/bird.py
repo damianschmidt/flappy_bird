@@ -17,17 +17,17 @@ class Bird:
 
     def jump(self):
         self.fall_time = 0
-        self.velocity = -10
+        self.velocity = -12
 
     def move(self):
         self.fall_time += 1
 
         up_force = self.velocity * self.fall_time
-        down_force = 1.5 * self.fall_time ** 2
+        down_force = 1.8 * self.fall_time ** 2
 
         fall_down = up_force + down_force
 
-        if fall_down >= 16:
+        if fall_down >= 18:
             fall_down = (fall_down / abs(fall_down)) * 16
 
         if fall_down < 0:

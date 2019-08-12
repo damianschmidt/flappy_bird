@@ -30,16 +30,16 @@ class Game:
         font = pygame.font.SysFont('Arial', 24)
         score_surface = font.render(f'Score: {self.score}', True, (255, 255, 255))
         gen_surface = font.render(f'Generation: {self.generation}', True, (255, 255, 255))
-        self.screen.blit(score_surface, (10, 10))
-        self.screen.blit(gen_surface, (200, 10))
+        self.screen.blit(gen_surface, (10, 10))
+        self.screen.blit(score_surface, (10, 60))
 
     def draw_num_of_alive(self, alive):
         pygame.font.init()
         font = pygame.font.SysFont('Arial', 24)
         text_surface = font.render(f'Alive: {alive}', True, (255, 255, 255))
-        self.screen.blit(text_surface, (100, 10))
+        self.screen.blit(text_surface, (10, 110))
 
-    def draw_screen(self, birds, pipes, ground, pipe_ind):
+    def draw_screen(self, birds, pipes, ground, pipe_ind, draw_line=False):
         self.screen.blit(self.bg_img, (0, 0))
         [pipe.draw(self.screen) for pipe in pipes]
         [bird.draw(self.screen) for bird in birds]
@@ -47,21 +47,21 @@ class Game:
         self.draw_score()
         self.draw_num_of_alive(len(birds))
 
-        # for bird in birds:
-        # draw lines from bird to pipe
-        # try:
-        #     pygame.draw.line(self.screen, (255, 0, 0),
-        #                      (bird.x + bird.img.get_width() / 2, bird.y + bird.img.get_height() / 2),
-        #                      (pipes[pipe_ind].x + pipes[pipe_ind].pipe_top.get_width() / 2, pipes[pipe_ind].height),
-        #                      5)
-        #     pygame.draw.line(self.screen, (255, 0, 0),
-        #                      (bird.x + bird.img.get_width() / 2, bird.y + bird.img.get_height() / 2), (
-        #                          pipes[pipe_ind].x + pipes[pipe_ind].pipe_bottom.get_width() / 2,
-        #                          pipes[pipe_ind].bottom_position), 5)
-        # except:
-        #     pass
+        if draw_line:
+            for bird in birds:
+                try:
+                    pygame.draw.line(self.screen, (255, 0, 0),
+                                     (bird.x + bird.img.get_width() / 2, bird.y + bird.img.get_height() / 2),
+                                     (pipes[pipe_ind].x + pipes[pipe_ind].pipe_top.get_width() / 2,
+                                      pipes[pipe_ind].height),
+                                     5)
+                    pygame.draw.line(self.screen, (255, 0, 0),
+                                     (bird.x + bird.img.get_width() / 2, bird.y + bird.img.get_height() / 2), (
+                                         pipes[pipe_ind].x + pipes[pipe_ind].pipe_bottom.get_width() / 2,
+                                         pipes[pipe_ind].bottom_position), 5)
+                except:
+                    pass
 
-        clock.tick(30)
         pygame.display.update()
 
     def move(self, birds, ground, pipes):
@@ -200,7 +200,6 @@ class Game:
                     add_pipe = True
 
             if add_pipe:
-                add_pipe = False
                 self.score += 1
                 pipes.append(Pipe(self.screen_width))
 
@@ -217,7 +216,7 @@ class Game:
                 nets.remove(item[1])
                 genomes_list.remove(item[2])
 
-            self.draw_screen(birds, pipes, ground, pipe_index)
+            self.draw_screen(birds, pipes, ground, pipe_index, True)
 
     def run_neat(self, config_file):
         # Load configuration.
@@ -234,7 +233,7 @@ class Game:
         # p.add_reporter(neat.Checkpointer(5))
 
         # Run for up to 50 generations.
-        winner = p.run(self.eval_genomes, 50)
+        winner = p.run(self.eval_genomes, 20)
 
         # Show final stats
         print('\nBest genome:\n{!s}'.format(winner))
