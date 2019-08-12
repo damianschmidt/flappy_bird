@@ -121,6 +121,10 @@ dmypy.json
 .idea/
 .vscode/
 
+#SVG
+*.svg
+*.gv
+
 # OS
 .DS_Store
 Thumbs.db

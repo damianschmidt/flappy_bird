@@ -20,31 +20,46 @@ class Game:
         self.bg_img = pygame.transform.scale(pygame.image.load('src/img/background.png').convert_alpha(), (600, 900))
         self.score = 0
         self.run = False
-        self.num_alive = 0
         self.generation = 0
 
     def start(self):
         self.game_loop()
 
-    def draw_score(self, score):
+    def draw_score(self):
         pygame.font.init()
         font = pygame.font.SysFont('Arial', 24)
-        text_surface = font.render(f'Score: {score}', True, (255, 255, 255))
-        self.screen.blit(text_surface, (10, 10))
+        score_surface = font.render(f'Score: {self.score}', True, (255, 255, 255))
+        gen_surface = font.render(f'Generation: {self.generation}', True, (255, 255, 255))
+        self.screen.blit(score_surface, (10, 10))
+        self.screen.blit(gen_surface, (200, 10))
 
-    def draw_num_of_alive(self):
+    def draw_num_of_alive(self, alive):
         pygame.font.init()
         font = pygame.font.SysFont('Arial', 24)
-        text_surface = font.render(f'Alive: {self.num_alive}', True, (255, 255, 255))
+        text_surface = font.render(f'Alive: {alive}', True, (255, 255, 255))
         self.screen.blit(text_surface, (100, 10))
 
-    def draw_screen(self, birds, pipes, ground):
+    def draw_screen(self, birds, pipes, ground, pipe_ind):
         self.screen.blit(self.bg_img, (0, 0))
         [pipe.draw(self.screen) for pipe in pipes]
         [bird.draw(self.screen) for bird in birds]
         ground.draw(self.screen)
-        self.draw_score(self.score)
-        self.draw_num_of_alive()
+        self.draw_score()
+        self.draw_num_of_alive(len(birds))
+
+        # for bird in birds:
+        # draw lines from bird to pipe
+        # try:
+        #     pygame.draw.line(self.screen, (255, 0, 0),
+        #                      (bird.x + bird.img.get_width() / 2, bird.y + bird.img.get_height() / 2),
+        #                      (pipes[pipe_ind].x + pipes[pipe_ind].pipe_top.get_width() / 2, pipes[pipe_ind].height),
+        #                      5)
+        #     pygame.draw.line(self.screen, (255, 0, 0),
+        #                      (bird.x + bird.img.get_width() / 2, bird.y + bird.img.get_height() / 2), (
+        #                          pipes[pipe_ind].x + pipes[pipe_ind].pipe_bottom.get_width() / 2,
+        #                          pipes[pipe_ind].bottom_position), 5)
+        # except:
+        #     pass
 
         clock.tick(30)
         pygame.display.update()
@@ -63,17 +78,17 @@ class Game:
                 if pipe.collide(bird):
                     birds.remove(bird)
 
-            if pipe.x + pipe.pipe_top.get_width() < 0:
-                to_remove.append(pipe)
+                if pipe.x + pipe.pipe_top.get_width() < 0:
+                    to_remove.append(pipe)
 
-            if not pipe.passed and pipe.x < bird.x:
-                pipe.passed = True
-                add_pipe = True
+                if not pipe.passed and pipe.x < bird.x:
+                    pipe.passed = True
+                    add_pipe = True
 
-            if add_pipe:
-                add_pipe = False
-                self.score += 1
-                pipes.append(Pipe(self.screen_width))
+                if add_pipe:
+                    add_pipe = False
+                    self.score += 1
+                    pipes.append(Pipe(self.screen_width))
 
         for item in to_remove:
             pipes.remove(item)
@@ -83,8 +98,7 @@ class Game:
                 birds.remove(bird)
 
     def is_running(self, birds):
-        self.num_alive = len(birds)
-        if self.num_alive == 0:
+        if len(birds) == 0:
             self.run = False
 
     def restart(self):
@@ -97,7 +111,6 @@ class Game:
         ground = Ground(self.base, self.screen_width)
         pipes = [Pipe(700)]
         self.run = True
-        self.num_alive = len(birds)
 
         while True:
             for event in pygame.event.get():
@@ -118,7 +131,7 @@ class Game:
                 self.move(birds, ground, pipes)
                 self.collision(birds, pipes)
                 self.is_running(birds)
-                self.draw_screen(birds, pipes, ground)
+                self.draw_screen(birds, pipes, ground, 0)
 
     def eval_genomes(self, genomes, config):
         self.generation += 1
@@ -139,7 +152,6 @@ class Game:
         ground = Ground(self.base, self.screen_width)
         pipes = [Pipe(700)]
         self.score = 0
-        self.num_alive = len(birds)
         self.run = True
 
         while self.run and len(birds) > 0:
@@ -153,7 +165,7 @@ class Game:
 
             # On which pipe NEAT should take care of
             pipe_index = 0
-            if len(pipes) > 1 and birds[0].x > pipes[0].pipe_top.get_width():
+            if len(pipes) > 1 and birds[0].x > pipes[0].x + pipes[0].pipe_top.get_width():
                 pipe_index = 1
 
             for i, bird in enumerate(birds):
@@ -168,12 +180,44 @@ class Game:
                     bird.jump()
 
             ground.move()
+            [pipe.move() for pipe in pipes]
 
-            # Add pipe move and collision
-            # Add removing pipes
-            # Add collision with ground and sky
-            # Remove genomes, nets and birds if requires
-            # Draw window
+            pipes_to_remove = []
+            add_pipe = False
+
+            for pipe in pipes:
+                for i, bird in enumerate(birds):
+                    if pipe.collide(bird):
+                        genomes_list[i].fitness -= 1
+                        birds.remove(bird)
+
+                if pipe.x + pipe.pipe_top.get_width() < 0:
+                    pipes_to_remove.append(pipe)
+
+                if not pipe.passed and pipe.x < bird.x:
+                    # genomes_list[i].fitness += 5
+                    pipe.passed = True
+                    add_pipe = True
+
+            if add_pipe:
+                add_pipe = False
+                self.score += 1
+                pipes.append(Pipe(self.screen_width))
+
+            for item in pipes_to_remove:
+                pipes.remove(item)
+
+            to_remove = []
+            for i, bird in enumerate(birds):
+                if bird.y + bird.img.get_height() >= self.base or bird.y < 0:
+                    to_remove.append((bird, nets[i], genomes_list[i]))
+
+            for item in to_remove:
+                birds.remove(item[0])
+                nets.remove(item[1])
+                genomes_list.remove(item[2])
+
+            self.draw_screen(birds, pipes, ground, pipe_index)
 
     def run_neat(self, config_file):
         # Load configuration.
@@ -189,8 +233,8 @@ class Game:
         p.add_reporter(stats)
         # p.add_reporter(neat.Checkpointer(5))
 
-        # Run for up to 20 generations.
-        winner = p.run(self.eval_genomes, 20)
+        # Run for up to 50 generations.
+        winner = p.run(self.eval_genomes, 50)
 
         # Show final stats
         print('\nBest genome:\n{!s}'.format(winner))
