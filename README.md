@@ -1,2 +1,16 @@
-# flappy_bird
-Implementation of Flappy Bird game in Python
+# Flappy Bird with NEAT
+Implementation of Flappy Bird game in Python with pygame.
+
+## Installation
+After clone repo to install required packages type command:
+```
+python setup.py install
+```
+It's a good idea to do this in a virtual environment.
+Then to run the applications run:
+```
+python run.py
+```
+
+## Preview
+![](flappy.gif)
