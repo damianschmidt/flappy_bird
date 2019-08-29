@@ -22,9 +22,6 @@ class Game:
         self.run = False
         self.generation = 0
 
-    def start(self):
-        self.game_loop()
-
     def draw_score(self):
         pygame.font.init()
         font = pygame.font.SysFont('Arial', 24)
@@ -185,11 +182,11 @@ class Game:
             pipes_to_remove = []
             add_pipe = False
 
+            to_remove = []
             for pipe in pipes:
                 for i, bird in enumerate(birds):
                     if pipe.collide(bird):
-                        genomes_list[i].fitness -= 1
-                        birds.remove(bird)
+                        to_remove.append((bird, nets[i], genomes_list[i]))
 
                 if pipe.x + pipe.pipe_top.get_width() < 0:
                     pipes_to_remove.append(pipe)
@@ -206,7 +203,6 @@ class Game:
             for item in pipes_to_remove:
                 pipes.remove(item)
 
-            to_remove = []
             for i, bird in enumerate(birds):
                 if bird.y + bird.img.get_height() >= self.base or bird.y < 0:
                     to_remove.append((bird, nets[i], genomes_list[i]))
